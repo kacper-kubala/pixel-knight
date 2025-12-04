@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Knight</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <!-- Highlight.js for code syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+    <div class="app-container" id="appContainer">
+        <!-- Left Sidebar - Sessions -->
+        <aside class="sidebar sidebar-left" id="sidebarLeft">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">◈</span>
+                    <span class="logo-text">Pixel Knight</span>
+                </div>
+                <button class="btn-icon" id="newSessionBtn" title="New Chat">
+                    <span>+</span>
+                </button>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="section-header">
+                    <h3 class="section-title">Sessions</h3>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="sessionSearch" placeholder="🔍 Search sessions..." class="search-input">
+                </div>
+                <div class="sessions-list" id="sessionsList">
+                    <!-- Sessions will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3 class="section-title">Models on API</h3>
+                <div class="models-list" id="modelsList">
+                    <!-- Models will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <button class="btn-settings" id="compareBtn">
+                    <span>⚖️</span> Compare Models
+                </button>
+                <button class="btn-settings" id="usageBtn">
+                    <span>📊</span> Usage Stats
+                </button>
+            </div>
+        </aside>
+        
+        <!-- Sidebar Toggle -->
+        <button class="sidebar-toggle sidebar-toggle-left" id="toggleLeftSidebar" title="Toggle Sidebar">
+            ◀
+        </button>
+        
+        <!-- Main Chat Area -->
+        <main class="chat-main">
+            <div class="chat-header">
+                <div class="session-info">
+                    <span class="session-label">Session:</span>
+                    <span class="session-name" id="currentSessionName" title="Click to edit">No session selected</span>
+                    <button class="btn-icon btn-small" id="editNameBtn" title="Edit name">✏️</button>
+                    <button class="btn-icon btn-small" id="autoNameBtn" title="Auto-generate name">✨</button>
+                </div>
+                <div class="chat-actions">
+                    <button class="btn-text" id="exportMdBtn" title="Export as Markdown">📥 MD</button>
+                    <button class="btn-text" id="exportJsonBtn" title="Export as JSON">📥 JSON</button>
+                    <button class="btn-text" id="copyAllBtn">Copy All</button>
+                    <button class="btn-text" id="paramsBtn">⚙ Parameters</button>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="empty-state">
+                    <div class="empty-icon">◈</div>
+                    <p>No messages yet. Start a conversation.</p>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="input-row">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="message..."
+                        rows="1"
+                    ></textarea>
+                    <div class="input-actions">
+                        <button class="btn-action" id="researchBtn" title="Enable web search">Research</button>
+                        <button class="btn-action" id="deepResearchBtn" title="Deep multi-round research">Deep</button>
+                        <button class="btn-action" id="youtubeBtn" title="Summarize YouTube video">YT</button>
+                        <button class="btn-action" id="imageBtn" title="Generate image">🎨</button>
+                        <button class="btn-action" id="voiceBtn" title="Voice input">🎤</button>
+                        <button class="btn-send" id="sendBtn">
+                            <span class="send-icon">▶</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Sidebar Toggle Right -->
+        <button class="sidebar-toggle sidebar-toggle-right" id="toggleRightSidebar" title="Toggle Sidebar">
+            ▶
+        </button>
+        
+        <!-- Right Sidebar - Settings -->
+        <aside class="sidebar sidebar-right" id="sidebarRight">
+            <div class="sidebar-section">
+                <div class="section-header">
+                    <h3 class="section-title">RAG</h3>
+                    <label class="toggle">
+                        <input type="checkbox" id="ragToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="rag-content">
+                    <div class="input-group">
+                        <input type="text" id="ragPathInput" placeholder="Enter directory path for RAG">
+                        <button class="btn-small" id="addRagBtn">Add</button>
+                    </div>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <input type="file" id="fileUpload" accept=".txt,.md,.py,.js,.ts,.json,.pdf" multiple hidden>
+                        <button class="btn-upload" id="uploadBtn">📁 Upload Files</button>
+                    </div>
+                    <div class="rag-files" id="ragFilesList">
+                        <!-- RAG files will be listed here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <button class="btn-settings" id="searchSettingsBtn">
+                    <span>🔍</span> Search Settings
+                </button>
+            </div>
+            
+            <div class="sidebar-section">
+                <button class="btn-settings" id="apiSettingsBtn">
+                    <span>⚙</span> API Settings
+                </button>
+            </div>
+        </aside>
+    </div>
+    
+    <!-- Modal: Search Settings -->
+    <div class="modal" id="searchSettingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Search Settings</h2>
+                <button class="btn-close" id="closeSearchModal">×</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Choose your preferred search provider:</p>
+                
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="searchProvider" value="searxng">
+                        <span class="radio-label">SearXNG (Self-hosted)</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="searchProvider" value="brave">
+                        <span class="radio-label">Brave Search</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="searchProvider" value="duckduckgo" checked>
+                        <span class="radio-label">DuckDuckGo</span>
+                    </label>
+                </div>
+                
+                <div class="form-group" id="braveKeyGroup" style="display: none;">
+                    <label>Brave API Key</label>
+                    <input type="password" id="braveApiKey" placeholder="Enter Brave API key">
+                    <span class="form-hint">API key required for Brave Search</span>
+                </div>
+                
+                <div class="form-group" id="searxngUrlGroup" style="display: none;">
+                    <label>SearXNG URL</label>
+                    <input type="text" id="searxngUrl" placeholder="http://localhost:8888">
+                    <span class="form-hint">URL of your SearXNG instance</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelSearchSettings">Cancel</button>
+                <button class="btn-primary" id="saveSearchSettings">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: API Providers -->
+    <div class="modal" id="apiSettingsModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>🔌 API Providers</h2>
+                <button class="btn-close" id="closeApiModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="providers-section">
+                    <h3>Configured Providers</h3>
+                    <div class="providers-list" id="providersList">
+                        <!-- Providers will be rendered here -->
+                    </div>
+                </div>
+                
+                <div class="providers-section">
+                    <h3>Add Provider</h3>
+                    <div class="preset-providers" id="presetProviders">
+                        <!-- Preset buttons will be rendered here -->
+                    </div>
+                </div>
+                
+                <!-- Add custom provider form (hidden by default) -->
+                <div class="custom-provider-form hidden" id="customProviderForm">
+                    <h3>Custom Provider</h3>
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" id="customProviderName" placeholder="My API">
+                    </div>
+                    <div class="form-group">
+                        <label>API Base URL</label>
+                        <input type="text" id="customProviderUrl" placeholder="https://api.example.com/v1">
+                    </div>
+                    <div class="form-group">
+                        <label>API Key</label>
+                        <input type="password" id="customProviderKey" placeholder="Enter API key">
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-secondary" id="cancelCustomProvider">Cancel</button>
+                        <button class="btn-primary" id="saveCustomProvider">Add Provider</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="closeProvidersBtn">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Edit Provider -->
+    <div class="modal" id="editProviderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Provider</h2>
+                <button class="btn-close" id="closeEditProviderModal">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editProviderId">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="editProviderName">
+                </div>
+                <div class="form-group">
+                    <label>API Base URL</label>
+                    <input type="text" id="editProviderUrl">
+                </div>
+                <div class="form-group">
+                    <label>API Key</label>
+                    <input type="password" id="editProviderKey" placeholder="Enter new key (leave empty to keep current)">
+                    <span class="form-hint">Leave empty to keep existing key</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-danger" id="deleteProviderBtn">Delete</button>
+                <button class="btn-secondary" id="cancelEditProvider">Cancel</button>
+                <button class="btn-primary" id="saveEditProvider">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: New Session -->
+    <div class="modal" id="newSessionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>New Session</h2>
+                <button class="btn-close" id="closeNewSessionModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Session Name</label>
+                    <input type="text" id="newSessionName" placeholder="Enter session name (auto-generated if empty)">
+                </div>
+                <div class="form-group">
+                    <label>Select Model</label>
+                    <select id="newSessionModel">
+                        <!-- Models will be loaded here -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Load Preset</label>
+                    <select id="presetSelect">
+                        <option value="">-- Select a preset --</option>
+                        <!-- Presets will be loaded here -->
+                    </select>
+                    <span class="form-hint">Quick-load a preset configuration</span>
+                </div>
+                <div class="form-group">
+                    <label>System Prompt</label>
+                    <textarea id="newSessionSystemPrompt" rows="3" placeholder="You are a helpful AI assistant.">You are a helpful AI assistant.</textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Temperature</label>
+                        <input type="number" id="newSessionTemp" value="0.7" min="0" max="2" step="0.1">
+                    </div>
+                    <div class="form-group half">
+                        <label>Max Tokens</label>
+                        <input type="number" id="newSessionMaxTokens" value="2048" min="1" max="32000">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelNewSession">Cancel</button>
+                <button class="btn-primary" id="createSession">Create</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: LLM Parameters -->
+    <div class="modal" id="paramsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>LLM Parameters</h2>
+                <button class="btn-close" id="closeParamsModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>System Prompt</label>
+                    <textarea id="sessionSystemPrompt" rows="4" placeholder="You are a helpful AI assistant."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Temperature <span class="param-value" id="tempValue">0.7</span></label>
+                        <input type="range" id="sessionTemp" value="0.7" min="0" max="2" step="0.1">
+                    </div>
+                    <div class="form-group half">
+                        <label>Max Tokens</label>
+                        <input type="number" id="sessionMaxTokens" value="2048" min="1" max="32000">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelParams">Cancel</button>
+                <button class="btn-primary" id="saveParams">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: YouTube Summarize -->
+    <div class="modal" id="youtubeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Summarize YouTube Video</h2>
+                <button class="btn-close" id="closeYoutubeModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>YouTube URL</label>
+                    <input type="text" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelYoutube">Cancel</button>
+                <button class="btn-primary" id="summarizeYoutube">Summarize</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Deep Research -->
+    <div class="modal" id="deepResearchModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Deep Research</h2>
+                <button class="btn-close" id="closeDeepResearchModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Research Query</label>
+                    <textarea id="researchQuery" rows="3" placeholder="What would you like to research?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Max Iterations</label>
+                    <input type="number" id="researchIterations" value="5" min="1" max="10">
+                    <span class="form-hint">Number of search/analysis rounds</span>
+                </div>
+                <div class="research-progress" id="researchProgress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-status" id="progressStatus">Starting research...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelDeepResearch">Cancel</button>
+                <button class="btn-primary" id="startDeepResearch">Start Research</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Usage Stats -->
+    <div class="modal" id="usageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Usage Statistics</h2>
+                <button class="btn-close" id="closeUsageModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="stats-grid" id="usageStats">
+                    <!-- Stats will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" id="closeUsageBtn">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Model Comparison -->
+    <div class="modal" id="compareModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>⚖️ Compare Models</h2>
+                <button class="btn-close" id="closeCompareModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Prompt</label>
+                    <textarea id="comparePrompt" rows="3" placeholder="Enter a prompt to compare..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Model A</label>
+                        <select id="compareModelA">
+                            <!-- Models will be loaded here -->
+                        </select>
+                    </div>
+                    <div class="form-group half">
+                        <label>Model B</label>
+                        <select id="compareModelB">
+                            <!-- Models will be loaded here -->
+                        </select>
+                    </div>
+                </div>
+                <div class="compare-results" id="compareResults" style="display: none;">
+                    <div class="compare-column">
+                        <div class="compare-header">
+                            <span id="compareHeaderA">Model A</span>
+                            <div class="spinner" id="spinnerA" style="display: none;"></div>
+                        </div>
+                        <div class="compare-response markdown-body" id="compareResponseA">
+                            Waiting for response...
+                        </div>
+                    </div>
+                    <div class="compare-column">
+                        <div class="compare-header">
+                            <span id="compareHeaderB">Model B</span>
+                            <div class="spinner" id="spinnerB" style="display: none;"></div>
+                        </div>
+                        <div class="compare-response markdown-body" id="compareResponseB">
+                            Waiting for response...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelCompare">Close</button>
+                <button class="btn-primary" id="startCompare">Compare</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Image Generation -->
+    <div class="modal" id="imageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎨 Generate Image</h2>
+                <button class="btn-close" id="closeImageModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Image Prompt</label>
+                    <textarea id="imagePrompt" rows="3" placeholder="Describe the image you want to generate..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Size</label>
+                        <select id="imageSize">
+                            <option value="1024x1024">Square (1024×1024)</option>
+                            <option value="1792x1024">Landscape (1792×1024)</option>
+                            <option value="1024x1792">Portrait (1024×1792)</option>
+                        </select>
+                    </div>
+                    <div class="form-group half">
+                        <label>Quality</label>
+                        <select id="imageQuality">
+                            <option value="standard">Standard</option>
+                            <option value="hd">HD</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Style</label>
+                    <select id="imageStyle">
+                        <option value="vivid">Vivid</option>
+                        <option value="natural">Natural</option>
+                    </select>
+                </div>
+                <div id="imageGenerating" style="display: none;" class="generating-status">
+                    <div class="spinner"></div>
+                    <span>Generating image...</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelImage">Cancel</button>
+                <button class="btn-primary" id="generateImage">Generate</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Keyboard Shortcuts -->
+    <div class="modal" id="shortcutsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⌨️ Keyboard Shortcuts</h2>
+                <button class="btn-close" id="closeShortcutsModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcuts-list">
+                    <div class="shortcut-category">
+                        <h4>General</h4>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span>
+                            <span class="shortcut-desc">Send message</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>N</kbd></span>
+                            <span class="shortcut-desc">New session</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>K</kbd></span>
+                            <span class="shortcut-desc">Focus input</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Escape</kbd></span>
+                            <span class="shortcut-desc">Close modal</span>
+                        </div>
+                    </div>
+                    <div class="shortcut-category">
+                        <h4>Navigation</h4>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>1</kbd>-<kbd>9</kbd></span>
+                            <span class="shortcut-desc">Switch to session #</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>B</kbd></span>
+                            <span class="shortcut-desc">Toggle sidebar</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>?</kbd></span>
+                            <span class="shortcut-desc">Show shortcuts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" id="closeShortcutsBtn">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
+    <!-- Highlight.js for code syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- Common language support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>
